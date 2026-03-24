@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guess Who – Heroes of the Storm</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a227;
+    --gold-light: #f0d060;
+    --gold-dark: #8a6a0a;
+    --bg-deep: #0a0c14;
+    --bg-panel: #111520;
+    --bg-card: #161c2e;
+    --bg-card-hover: #1e2640;
+    --bg-eliminated: #0d0f18;
+    --border: rgba(201,162,39,0.25);
+    --border-bright: rgba(201,162,39,0.7);
+    --text-primary: #e8dfc0;
+    --text-secondary: #8a9ab8;
+    --text-muted: #4a5570;
+    --blue-glow: #4a90d9;
+    --red-accent: #c0392b;
+    --teal-accent: #1abc9c;
+    --purple-accent: #8e44ad;
+    --diablo-red: #b22222;
+    --starcraft-blue: #1e6fb5;
+    --warcraft-gold: #c89b3c;
+    --nexus-purple: #7b2d8b;
+    --overwatch-orange: #e67e22;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(30,111,181,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(139,44,173,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 60% 80%, rgba(201,162,39,0.04) 0%, transparent 50%);
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(201,162,39,0.06) 0%, transparent 100%);
+    pointer-events: none;
+  }
+  .header-subtitle {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.35em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    font-weight: 800;
+    color: var(--gold-light);
+    text-shadow: 0 0 40px rgba(201,162,39,0.4);
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+  }
+  .header-nexus {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 0.2em;
+    margin-top: 0.4rem;
+    text-transform: uppercase;
+  }
+
+  /* ─── LAYOUT ─── */
+  .game-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+  }
+
+  .phase-setup { display: block; }
+  .phase-game { display: none; }
+
+  /* ─── SETUP SCREEN ─── */
+  .setup-card {
+    max-width: 560px;
+    margin: 2rem auto;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2.5rem;
+    text-align: center;
+  }
+  .setup-card h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    color: var(--gold-light);
+    margin-bottom: 1rem;
+  }
+  .setup-card p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+  .setup-difficulty {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .diff-btn {
+    padding: 0.5rem 1.2rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .diff-btn:hover, .diff-btn.active {
+    border-color: var(--gold);
+    color: var(--gold-light);
+    background: rgba(201,162,39,0.08);
+  }
+  .start-btn {
+    display: inline-block;
+    padding: 0.9rem 2.5rem;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    color: #1a1200;
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(201,162,39,0.3);
+  }
+  .start-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(201,162,39,0.5);
+  }
+
+  /* ─── GAME LAYOUT ─── */
+  .game-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .game-layout { grid-template-columns: 1fr; }
+  }
+
+  /* ─── BOARD ─── */
+  .board-section h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .board-section h2 span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 400;
+  }
+  .board-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .hero-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--uni-color, transparent);
+    transition: opacity 0.2s;
+  }
+  .hero-card:hover:not(.eliminated) {
+    background: var(--bg-card-hover);
+    border-color: rgba(201,162,39,0.5);
+    transform: translateY(-2px);
+  }
+  .hero-card.eliminated {
+    background: var(--bg-eliminated);
+    border-color: rgba(255,255,255,0.04);
+    opacity: 0.35;
+    cursor: pointer;
+  }
+  .hero-card.eliminated .hero-icon { filter: grayscale(1); }
+  .hero-card.ai-secret {
+    border-color: var(--gold);
+    background: rgba(201,162,39,0.06);
+    box-shadow: 0 0 12px rgba(201,162,39,0.2);
+  }
+  .hero-icon {
+    font-size: 2rem;
+    line-height: 1;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+  .hero-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+  .hero-role-badge {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+  }
+  .elim-x {
+    display: none;
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: rgba(180,40,40,0.5);
+    pointer-events: none;
+  }
+  .eliminated .elim-x { display: flex; }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+  .panel-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* My secret hero */
+  .my-secret {
+    text-align: center;
+    padding: 0.5rem 0;
+  }
+  .my-secret .hero-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+  .my-secret .hero-name { font-size: 1rem; font-weight: 600; color: var(--gold-light); }
+  .my-secret .hero-attrs {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-top: 0.5rem;
+  }
+  .attr-tag {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px;
+    background: rgba(201,162,39,0.1);
+    border: 1px solid rgba(201,162,39,0.2);
+    font-size: 0.7rem;
+    color: var(--gold);
+    margin: 0.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* Question panel */
+  .question-category {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin: 0.75rem 0 0.35rem;
+    font-weight: 600;
+  }
+  .question-category:first-child { margin-top: 0; }
+  .question-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+  }
+  .q-btn {
+    padding: 0.35rem 0.7rem;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .q-btn:hover {
+    border-color: var(--blue-glow);
+    color: #a8d4f5;
+    background: rgba(74,144,217,0.08);
+  }
+  .q-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Log */
+  .log-area {
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .log-entry {
+    font-size: 0.83rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+  .log-entry:last-child { border-bottom: none; }
+  .log-entry .log-q { color: var(--text-primary); font-weight: 500; }
+  .log-entry .yes { color: #2ecc71; }
+  .log-entry .no { color: #e74c3c; }
+  .log-entry .turn-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .log-empty { color: var(--text-muted); font-size: 0.85rem; font-style: italic; }
+
+  /* Guess section */
+  .guess-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+    appearance: none;
+    cursor: pointer;
+  }
+  .guess-select option { background: var(--bg-deep); }
+  .guess-btn {
+    width: 100%;
+    padding: 0.65rem;
+    background: linear-gradient(135deg, rgba(30,111,181,0.4), rgba(30,111,181,0.2));
+    border: 1px solid rgba(74,144,217,0.5);
+    border-radius: 6px;
+    color: #a8d4f5;
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.2s;
+  }
+  .guess-btn:hover {
+    background: linear-gradient(135deg, rgba(30,111,181,0.6), rgba(30,111,181,0.35));
+    box-shadow: 0 0 16px rgba(74,144,217,0.25);
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+  }
+  .stat-pill strong { color: var(--gold-light); font-weight: 600; }
+
+  /* Turn indicator */
+  .turn-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .turn-indicator.your-turn {
+    background: rgba(46,204,113,0.08);
+    border: 1px solid rgba(46,204,113,0.25);
+    color: #2ecc71;
+  }
+  .turn-indicator.ai-turn {
+    background: rgba(231,76,60,0.08);
+    border: 1px solid rgba(231,76,60,0.25);
+    color: #e74c3c;
+  }
+  .turn-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  /* AI thinking */
+  .ai-thinking {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    background: rgba(139,44,173,0.1);
+    border: 1px solid rgba(139,44,173,0.3);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #c39bd3;
+    margin-bottom: 0.75rem;
+  }
+  .ai-thinking.visible { display: flex; }
+  .ai-dots span {
+    display: inline-block;
+    width: 5px; height: 5px;
+    background: currentColor;
+    border-radius: 50%;
+    margin: 0 1px;
+    animation: dotBounce 1.2s infinite;
+  }
+  .ai-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .ai-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dotBounce {
+    0%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-5px); }
+  }
+
+  /* End modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(5,7,15,0.88);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-bright);
+    border-radius: 14px;
+    padding: 2.5rem;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 0 60px rgba(201,162,39,0.15);
+  }
+  .modal h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  .modal.win h2 { color: var(--gold-light); }
+  .modal.lose h2 { color: #e74c3c; }
+  .modal p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+  .modal .hero-reveal { font-size: 4rem; margin: 1rem 0; }
+  .modal .play-again {
+    padding: 0.75rem 2rem;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    color: #1a1200;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Universe colors */
+  .uni-warcraft { --uni-color: var(--warcraft-gold); }
+  .uni-starcraft { --uni-color: var(--starcraft-blue); }
+  .uni-diablo { --uni-color: var(--diablo-red); }
+  .uni-overwatch { --uni-color: var(--overwatch-orange); }
+  .uni-nexus { --uni-color: var(--nexus-purple); }
+
+  /* Tooltip */
+  .hero-card[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1f35;
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-subtitle">The Nexus Challenge</div>
+  <h1>Guess Who?</h1>
+  <div class="header-nexus">Heroes of the Storm Edition</div>
+</header>
+
+<!-- SETUP PHASE -->
+<div class="game-container phase-setup" id="phaseSetup">
+  <div class="setup-card">
+    <h2>Enter the Nexus</h2>
+    <p>Two commanders. One mystery hero. Ask yes/no questions to identify your opponent's chosen champion before they reveal yours. The Nexus awaits.</p>
+    <div style="margin-bottom:1rem;">
+      <div class="question-category">AI Difficulty</div>
+      <div class="setup-difficulty">
+        <button class="diff-btn active" data-diff="easy" onclick="setDiff(this)">Recruit</button>
+        <button class="diff-btn" data-diff="medium" onclick="setDiff(this)">Veteran</button>
+        <button class="diff-btn" data-diff="hard" onclick="setDiff(this)">Heroic</button>
+      </div>
+    </div>
+    <button class="start-btn" onclick="startGame()">Enter the Nexus</button>
+  </div>
+</div>
+
+<!-- GAME PHASE -->
+<div class="game-container phase-game" id="phaseGame">
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-pill">Turn <strong id="statTurn">1</strong></div>
+    <div class="stat-pill"><strong id="statRemaining">24</strong> heroes remain</div>
+    <div class="stat-pill">AI: <strong id="statAiRemaining">24</strong> remain</div>
+  </div>
+
+  <div class="game-layout">
+
+    <!-- Board -->
+    <div class="board-section">
+      <h2>
+        The Nexus Board
+        <span>— click a hero to eliminate them from your board</span>
+      </h2>
+      <div class="board-grid" id="boardGrid"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+
+      <!-- My hero -->
+      <div class="panel">
+        <div class="panel-title">Your Secret Hero</div>
+        <div class="my-secret" id="mySecret"></div>
+      </div>
+
+      <!-- Turn + AI -->
+      <div class="panel">
+        <div class="panel-title">Battle Status</div>
+        <div class="turn-indicator your-turn" id="turnIndicator">
+          <div class="turn-dot"></div>
+          <span id="turnText">Your Turn</span>
+        </div>
+        <div class="ai-thinking" id="aiThinking">
+          <span>The Nexus AI ponders</span>
+          <div class="ai-dots"><span></span><span></span><span></span></div>
+        </div>
+        <div id="aiQuestionDisplay"></div>
+      </div>
+
+      <!-- Questions -->
+      <div class="panel" id="questionPanel">
+        <div class="panel-title">Ask a Question</div>
+        <div id="questionButtons"></div>
+      </div>
+
+      <!-- Guess -->
+      <div class="panel" id="guessPanel">
+        <div class="panel-title">Make Your Guess</div>
+        <select class="guess-select" id="guessSelect"></select>
+        <button class="guess-btn" onclick="makeGuess()">Reveal the Hero!</button>
+      </div>
+
+      <!-- Log -->
+      <div class="panel">
+        <div class="panel-title">Battle Log</div>
+        <div class="log-area" id="logArea">
+          <div class="log-empty">No questions asked yet...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- End Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <h2 id="modalTitle"></h2>
+    <div class="hero-reveal" id="modalHeroReveal"></div>
+    <p id="modalText"></p>
+    <button class="play-again" onclick="resetGame()">Play Again</button>
+  </div>
+</div>
+
+<script>
+// ─── HERO DATA ───────────────────────────────────────────────────────────────
+const HEROES = [
+  { name:"Arthas",      icon:"💀", universe:"Warcraft",    role:"Tank",              gender:"Male",   ranged:false, healer:false, magic:true,  armor:true,  mount:false, undead:true,  animal:false, wings:false, masked:false },
+  { name:"Jaina",       icon:"🌊", universe:"Warcraft",    role:"Assassin",          gender:"Female", ranged:true,  healer:false, magic:true,  armor:false, mount:false, undead:false, animal:false, wings:false, masked:false },
+  { name:"Tyrael",      icon:"⚔️", universe:"Warcraft",    role:"Support",           gender:"Male",   ranged:false, healer:false, magic:true,  armor:true,  mount:false, undead:false, animal:false, wings:true,  masked:true  },
+  { name:"Sylvanas",    icon:"🏹", universe:"Warcraft",    role:"Assassin",          gender:"Female", ranged:true,  healer:false, magic:true,  armor:false, mount:false, undead:true,  animal:false, wings:false, masked:false },
+  { name:"Malfurion",   icon:"🌙", universe:"Warcraft",    role:"Healer",            gender:"Male",   ranged:false, healer:true,  magic:true,  armor:false, mount:false, undead:false, animal:false, wings:false, masked:false },
+  { name:"Thrall",      icon:"🌩️", universe:"Warcraft",    role:"Bruiser",           gender:"Male",   ranged:false, healer:false, magic:true,  armor:true,  mount:false, undead:false, animal:false, wings:false, masked:false },
+  { name:"Brightwing",  icon:"🦋", universe:"Warcraft",    role:"Healer",            gender:"Female", ranged:false, healer:true,  magic:true,  armor:false, mount:false, undead:false, animal:true,  wings:true,  masked:false },
+  { name:"Illidan",     icon:"🔥", universe:"Warcraft",    role:"Assassin",          gender:"Male",   ranged:false, healer:false, magic:true,  armor:false, mount:false, undead:false, animal:false, wings:true,  masked:true  },
+  { name:"Stitches",    icon:"🪡", universe:"Warcraft",    role:"Tank",              gender:"Male",   ranged:false, healer:false, magic:false, armor:false, mount:false, undead:true,  animal:false, wings:false, masked:false },
+  { name:"Jim Raynor",  icon:"🔫", universe:"StarCraft",   role:"Assassin",          gender:"Male",   ranged:true,  healer:false, magic:false, armor:false, mount:false, undead:false, animal:false, wings:false, masked:false },
+  { name:"Kerrigan",    icon:"🕷️", universe:"StarCraft",   role:"Assassin",          gender:"Female", ranged:false, healer:false, magic:true,  armor:false, mount:false, undead:false, animal:false, wings:true,  masked:false },
+  { name:"Artanis",     icon:"🛡️", universe:"StarCraft",   role:"Bruiser",           gender:"Male",   ranged:false, healer:false, magic:true,  armor:true,  mount:false, undead:false, animal:false, wings:false, masked:false },
+  { name:"Abathur",     icon:"🧬", universe:"StarCraft",   role:"Specialist",        gender:"Male",   ranged:false, healer:false, magic:false, armor:false, mount:false, undead:false, animal:true,  wings:false, masked:false },
+  { name:"Zagara",      icon:"🦂", universe:"StarCraft",   role:"Assassin",          gender:"Female", ranged:true,  healer:false, magic:false, armor:false, mount:false, undead:false, animal:true,  wings:false, masked:false },
+  { name:"Nova",        icon:"👁️", universe:"StarCraft",   role:"Assassin",          gender:"Female", ranged:true,  healer:false, magic:false, armor:false, mount:false, undead:false, animal:false, wings:false, masked:false },
+  { name:"Diablo",      icon:"😈", universe:"Diablo",      role:"Tank",              gender:"Male",   ranged:false, healer:false, magic:true,  armor:false, mount:false, undead:false, animal:false, wings:true,  masked:false },
+  { name:"Li-Ming",     icon:"✨", universe:"Diablo",      role:"Assassin",          gender:"Female", ranged:true,  healer:false, magic:true,  armor:false, mount:false, undead:false, animal:false, wings:false, masked:false },
+  { name:"Johanna",     icon:"🏰", universe:"Diablo",      role:"Tank",              gender:"Female", ranged:false, healer:false, magic:true,  armor:true,  mount:false, undead:false, animal:false, wings:false, masked:false },
+  { name:"Nazeebo",     icon:"🍵", universe:"Diablo",      role:"Assassin",          gender:"Male",   ranged:false, healer:false, magic:true,  armor:false, mount:false, undead:false, animal:false, wings:false, masked:false },
+  { name:"Sonya",       icon:"⚡", universe:"Diablo",      role:"Bruiser",           gender:"Female", ranged:false, healer:false, magic:false, armor:false, mount:false, undead:false, animal:false, wings:false, masked:false },
+  { name:"Tracer",      icon:"🕐", universe:"Overwatch",   role:"Assassin",          gender:"Female", ranged:true,  healer:false, magic:false, armor:false, mount:false, undead:false, animal:false, wings:false, masked:true  },
+  { name:"Lucio",       icon:"🎵", universe:"Overwatch",   role:"Healer",            gender:"Male",   ranged:true,  healer:true,  magic:false, armor:false, mount:false, undead:false, animal:false, wings:false, masked:false },
+  { name:"Ana",         icon:"💉", universe:"Overwatch",   role:"Healer",            gender:"Female", ranged:true,  healer:true,  magic:false, armor:false, mount:false, undead:false, animal:false, wings:false, masked:true  },
+  { name:"Genji",       icon:"🗡️", universe:"Overwatch",   role:"Assassin",          gender:"Male",   ranged:false, healer:false, magic:false, armor:true,  mount:false, undead:false, animal:false, wings:false, masked:true  },
+];
+
+const QUESTIONS = [
+  { category:"Universe", label:"Warcraft?",   attr:"universe",  value:"Warcraft"   },
+  { category:"Universe", label:"StarCraft?",  attr:"universe",  value:"StarCraft"  },
+  { category:"Universe", label:"Diablo?",     attr:"universe",  value:"Diablo"     },
+  { category:"Universe", label:"Overwatch?",  attr:"universe",  value:"Overwatch"  },
+  { category:"Role",     label:"A Tank?",     attr:"role",      value:"Tank"       },
+  { category:"Role",     label:"A Healer?",   attr:"role",      value:"Healer"     },
+  { category:"Role",     label:"An Assassin?",attr:"role",      value:"Assassin"   },
+  { category:"Role",     label:"A Bruiser?",  attr:"role",      value:"Bruiser"    },
+  { category:"Traits",   label:"Female?",     attr:"gender",    value:"Female"     },
+  { category:"Traits",   label:"Ranged?",     attr:"ranged",    value:true         },
+  { category:"Traits",   label:"Uses magic?", attr:"magic",     value:true         },
+  { category:"Traits",   label:"Wears armor?",attr:"armor",     value:true         },
+  { category:"Traits",   label:"Has wings?",  attr:"wings",     value:true         },
+  { category:"Traits",   label:"Is undead?",  attr:"undead",    value:true         },
+  { category:"Traits",   label:"An animal?",  attr:"animal",    value:true         },
+  { category:"Traits",   label:"Masked/helmeted?", attr:"masked", value:true      },
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let state = {};
+
+function setDiff(btn) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function getDiff() {
+  const btn = document.querySelector('.diff-btn.active');
+  return btn ? btn.dataset.diff : 'easy';
+}
+
+function startGame() {
+  const diff = getDiff();
+  const shuffled = [...HEROES].sort(() => Math.random() - 0.5);
+  const myHero = shuffled[0];
+  const aiHero = shuffled[Math.floor(Math.random() * HEROES.length)];
+
+  state = {
+    myHero,
+    aiHero,
+    diff,
+    playerBoard: HEROES.map(h => ({ ...h, eliminated: false })),
+    aiCandidates: [...HEROES],
+    questionsAsked: new Set(),
+    aiQuestionsAsked: new Set(),
+    turn: 1,
+    isPlayerTurn: true,
+    log: [],
+    gameOver: false,
+  };
+
+  document.getElementById('phaseSetup').style.display = 'none';
+  document.getElementById('phaseGame').style.display = 'block';
+
+  renderBoard();
+  renderMySecret();
+  renderQuestions();
+  renderGuessSelect();
+  renderLog();
+  updateStats();
+  updateTurnIndicator();
+}
+
+function resetGame() {
+  document.getElementById('modalOverlay').classList.remove('visible');
+  document.getElementById('phaseSetup').style.display = 'block';
+  document.getElementById('phaseGame').style.display = 'none';
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function renderBoard() {
+  const grid = document.getElementById('boardGrid');
+  grid.innerHTML = '';
+  state.playerBoard.forEach((hero, i) => {
+    const uniClass = 'uni-' + hero.universe.toLowerCase().split(' ')[0];
+    const tooltip = `${hero.universe} · ${hero.role} · ${hero.gender}`;
+    const div = document.createElement('div');
+    div.className = `hero-card ${uniClass}${hero.eliminated ? ' eliminated' : ''}`;
+    div.title = tooltip;
+    div.innerHTML = `
+      <span class="hero-icon">${hero.icon}</span>
+      <div class="hero-name">${hero.name}</div>
+      <div class="hero-role-badge">${hero.role}</div>
+      <div class="elim-x">✕</div>
+    `;
+    div.onclick = () => toggleEliminate(i);
+    grid.appendChild(div);
+  });
+}
+
+function renderMySecret() {
+  const h = state.myHero;
+  const uniColor = {
+    Warcraft:'#c89b3c', StarCraft:'#1e6fb5', Diablo:'#b22222', Overwatch:'#e67e22', Nexus:'#7b2d8b'
+  }[h.universe] || '#888';
+
+  const tags = [h.universe, h.role, h.gender,
+    h.ranged?'Ranged':'Melee', h.magic?'Magic':'Physical',
+    h.armor?'Armored':'', h.wings?'Wings':'', h.undead?'Undead':'',
+    h.animal?'Animal':'', h.masked?'Masked':''
+  ].filter(Boolean);
+
+  document.getElementById('mySecret').innerHTML = `
+    <div class="hero-icon">${h.icon}</div>
+    <div class="hero-name">${h.name}</div>
+    <div style="margin-top:0.5rem;">${tags.map(t=>`<span class="attr-tag">${t}</span>`).join('')}</div>
+  `;
+}
+
+function renderQuestions() {
+  const panel = document.getElementById('questionButtons');
+  panel.innerHTML = '';
+  let lastCat = '';
+
+  QUESTIONS.forEach(q => {
+    if (q.category !== lastCat) {
+      lastCat = q.category;
+      const cat = document.createElement('div');
+      cat.className = 'question-category';
+      cat.textContent = q.category;
+      panel.appendChild(cat);
+      const row = document.createElement('div');
+      row.className = 'question-btns';
+      row.id = 'cat-' + q.category;
+      panel.appendChild(row);
+    }
+    const btn = document.createElement('button');
+    btn.className = 'q-btn';
+    btn.textContent = q.label;
+    btn.disabled = state.questionsAsked.has(q.label) || !state.isPlayerTurn || state.gameOver;
+    btn.onclick = () => askQuestion(q);
+    document.getElementById('cat-' + q.category).appendChild(btn);
+  });
+}
+
+function renderGuessSelect() {
+  const sel = document.getElementById('guessSelect');
+  sel.innerHTML = '<option value="">— Choose a hero —</option>';
+  state.playerBoard
+    .filter(h => !h.eliminated)
+    .forEach(h => {
+      const opt = document.createElement('option');
+      opt.value = h.name;
+      opt.textContent = h.icon + ' ' + h.name;
+      sel.appendChild(opt);
+    });
+}
+
+function renderLog() {
+  const area = document.getElementById('logArea');
+  if (!state.log.length) {
+    area.innerHTML = '<div class="log-empty">No questions asked yet...</div>';
+    return;
+  }
+  area.innerHTML = state.log.slice().reverse().map(entry => `
+    <div class="log-entry">
+      <div class="turn-label">${entry.who} – Turn ${entry.turn}</div>
+      <div class="log-q">${entry.question}</div>
+      <div class="${entry.answer ? 'yes' : 'no'}">${entry.answer ? 'Yes!' : 'No.'}</div>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  document.getElementById('statTurn').textContent = state.turn;
+  document.getElementById('statRemaining').textContent = state.playerBoard.filter(h=>!h.eliminated).length;
+  document.getElementById('statAiRemaining').textContent = state.aiCandidates.length;
+}
+
+function updateTurnIndicator() {
+  const ind = document.getElementById('turnIndicator');
+  const txt = document.getElementById('turnText');
+  ind.className = 'turn-indicator ' + (state.isPlayerTurn ? 'your-turn' : 'ai-turn');
+  txt.textContent = state.isPlayerTurn ? 'Your Turn' : 'AI Turn';
+}
+
+// ─── PLAYER ACTIONS ──────────────────────────────────────────────────────────
+function toggleEliminate(i) {
+  state.playerBoard[i].eliminated = !state.playerBoard[i].eliminated;
+  renderBoard();
+  renderGuessSelect();
+  updateStats();
+}
+
+function askQuestion(q) {
+  if (!state.isPlayerTurn || state.gameOver) return;
+
+  const answer = state.aiHero[q.attr] === q.value;
+  state.questionsAsked.add(q.label);
+  state.log.push({ who: 'You', turn: state.turn, question: q.label, answer });
+  renderLog();
+  renderQuestions();
+
+  // Flash feedback
+  const btn = [...document.querySelectorAll('.q-btn')].find(b => b.textContent === q.label);
+  if (btn) {
+    btn.style.background = answer ? 'rgba(46,204,113,0.2)' : 'rgba(231,76,60,0.2)';
+    btn.style.borderColor = answer ? '#2ecc71' : '#e74c3c';
+    btn.style.color = answer ? '#2ecc71' : '#e74c3c';
+  }
+
+  // End player turn, start AI turn
+  state.isPlayerTurn = false;
+  updateTurnIndicator();
+  updateStats();
+
+  setTimeout(() => doAiTurn(), 1800);
+}
+
+function makeGuess() {
+  const sel = document.getElementById('guessSelect').value;
+  if (!sel || state.gameOver) return;
+
+  const correct = sel === state.aiHero.name;
+  endGame(correct, sel);
+}
+
+// ─── AI LOGIC ────────────────────────────────────────────────────────────────
+function doAiTurn() {
+  if (state.gameOver) return;
+
+  document.getElementById('aiThinking').classList.add('visible');
+  document.getElementById('aiQuestionDisplay').innerHTML = '';
+
+  // AI picks the best question based on difficulty
+  const delay = { easy: 1200, medium: 800, hard: 500 }[state.diff];
+
+  setTimeout(() => {
+    document.getElementById('aiThinking').classList.remove('visible');
+
+    // Check if AI wants to guess
+    if (state.aiCandidates.length === 1 ||
+        (state.diff === 'hard' && state.aiCandidates.length <= 2) ||
+        (state.diff === 'medium' && state.aiCandidates.length <= 1)) {
+      const guess = state.aiCandidates[0];
+      const correct = guess.name === state.myHero.name;
+
+      const qDiv = document.getElementById('aiQuestionDisplay');
+      qDiv.innerHTML = `<div style="font-size:0.85rem;color:#c39bd3;padding:0.5rem 0.75rem;background:rgba(139,44,173,0.1);border:1px solid rgba(139,44,173,0.3);border-radius:6px;margin-bottom:0.5rem;">
+        🤖 AI guesses: <strong style="color:#e8dfc0;">${guess.icon} ${guess.name}</strong>
+      </div>`;
+
+      setTimeout(() => endGame(!correct, guess.name, true), 1000);
+      return;
+    }
+
+    const q = pickAiQuestion();
+    if (!q) {
+      // no more questions, pass turn back
+      completeTurn();
+      return;
+    }
+
+    const answer = state.myHero[q.attr] === q.value;
+    state.aiQuestionsAsked.add(q.label);
+
+    // Eliminate candidates
+    state.aiCandidates = state.aiCandidates.filter(h => (h[q.attr] === q.value) === answer);
+
+    state.log.push({ who: 'AI', turn: state.turn, question: q.label, answer });
+
+    const qDiv = document.getElementById('aiQuestionDisplay');
+    qDiv.innerHTML = `<div style="font-size:0.85rem;color:#c39bd3;padding:0.5rem 0.75rem;background:rgba(139,44,173,0.1);border:1px solid rgba(139,44,173,0.3);border-radius:6px;margin-bottom:0.5rem;">
+      🤖 AI asks: <span style="color:#e8dfc0;">${q.label}</span>
+      → <span style="${answer?'color:#2ecc71':'color:#e74c3c'}">${answer?'Yes!':'No.'}</span>
+    </div>`;
+
+    renderLog();
+    completeTurn();
+
+  }, delay + 600);
+}
+
+function pickAiQuestion() {
+  const remaining = QUESTIONS.filter(q => !state.aiQuestionsAsked.has(q.label));
+  if (!remaining.length) return null;
+
+  if (state.diff === 'easy') {
+    // Random
+    return remaining[Math.floor(Math.random() * remaining.length)];
+  }
+
+  if (state.diff === 'medium') {
+    // Pick question that splits candidates most evenly
+    return bestSplitQuestion(remaining);
+  }
+
+  // Hard: always optimal
+  return bestSplitQuestion(remaining);
+}
+
+function bestSplitQuestion(questions) {
+  let best = null;
+  let bestScore = Infinity;
+  const n = state.aiCandidates.length;
+
+  questions.forEach(q => {
+    const yes = state.aiCandidates.filter(h => h[q.attr] === q.value).length;
+    const no = n - yes;
+    const score = Math.abs(yes - no);
+    if (score < bestScore) {
+      bestScore = score;
+      best = q;
+    }
+  });
+  return best;
+}
+
+function completeTurn() {
+  state.turn++;
+  state.isPlayerTurn = true;
+  updateTurnIndicator();
+  updateStats();
+  renderQuestions();
+}
+
+// ─── END GAME ────────────────────────────────────────────────────────────────
+function endGame(playerWon, guessedName, aiGuessed = false) {
+  state.gameOver = true;
+  renderQuestions();
+
+  const overlay = document.getElementById('modalOverlay');
+  const modal = document.getElementById('modal');
+  const title = document.getElementById('modalTitle');
+  const reveal = document.getElementById('modalHeroReveal');
+  const text = document.getElementById('modalText');
+
+  modal.className = 'modal ' + (playerWon ? 'win' : 'lose');
+
+  if (aiGuessed) {
+    // AI was guessing
+    title.textContent = playerWon ? 'Victory!' : 'Defeat!';
+    reveal.textContent = state.myHero.icon;
+    if (playerWon) {
+      text.innerHTML = `The AI couldn't identify your hero! <strong>${state.myHero.name}</strong> remains a mystery to the Nexus. You win in ${state.turn} turns!`;
+    } else {
+      text.innerHTML = `The AI correctly identified <strong>${state.myHero.name}</strong> as your hero! Better luck next time, Commander.`;
+    }
+  } else {
+    const hero = HEROES.find(h => h.name === guessedName);
+    reveal.textContent = hero ? hero.icon : '❓';
+    if (playerWon) {
+      title.textContent = 'Victory!';
+      text.innerHTML = `Correct! The AI's hero was <strong>${state.aiHero.name}</strong>. You identified them in ${state.turn} turns!`;
+    } else {
+      title.textContent = 'Wrong!';
+      text.innerHTML = `That was <strong>${guessedName}</strong>, but the AI's hero was actually <strong>${state.aiHero.icon} ${state.aiHero.name}</strong>. Try again, Commander!`;
+    }
+  }
+
+  overlay.classList.add('visible');
+}
+</script>
+</body>
+</html>
