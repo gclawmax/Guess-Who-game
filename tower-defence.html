@@ -310,6 +310,7 @@
                 this.color = `hsl(${waveNumber * 20}, 70%, 50%)`;
                 this.slowEffect = 1;
                 this.slowTimer = 0;
+                this.hasReachedEnd = false;
             }
 
             update() {
@@ -319,8 +320,23 @@
                     this.slowEffect = 1;
                 }
 
+                // Check if enemy has already reached the end
+                if (this.hasReachedEnd) {
+                    return false; // Remove enemy
+                }
+
                 const target = path[this.pathIndex + 1];
-                if (!target) return;
+                
+                // If no target waypoint, enemy has reached the end
+                if (!target) {
+                    this.hasReachedEnd = true;
+                    lives--;
+                    updateStats();
+                    if (lives <= 0) {
+                        gameOver();
+                    }
+                    return false; // Remove enemy
+                }
 
                 const dx = target.x - this.x;
                 const dy = target.y - this.y;
@@ -329,12 +345,16 @@
                 if (distance < 5) {
                     this.pathIndex++;
                     this.pathPos = 0;
+                    
+                    // Check if this was the last waypoint
                     if (this.pathIndex >= path.length - 1) {
+                        this.hasReachedEnd = true;
                         lives--;
-                        this.health = 0;
                         updateStats();
-                        if (lives <= 0) gameOver();
-                        return;
+                        if (lives <= 0) {
+                            gameOver();
+                        }
+                        return false; // Remove enemy
                     }
                 }
 
@@ -344,6 +364,7 @@
 
                 this.x = path[this.pathIndex].x + dx * progress;
                 this.y = path[this.pathIndex].y + dy * progress;
+                return true; // Keep enemy
             }
 
             draw() {
@@ -742,10 +763,14 @@
             towers.forEach(tower => tower.update());
 
             // Update enemies
-            enemies = enemies.filter(enemy => {
-                enemy.update();
-                return enemy.health > 0;
-            });
+            const survivingEnemies = [];
+            for (const enemy of enemies) {
+                const keep = enemy.update();
+                if (keep && enemy.health > 0) {
+                    survivingEnemies.push(enemy);
+                }
+            }
+            enemies = survivingEnemies;
 
             // Update projectiles
             projectiles = projectiles.filter(projectile => {
