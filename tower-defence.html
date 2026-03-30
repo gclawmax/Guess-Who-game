@@ -282,32 +282,68 @@
             { x: 750, y: 400 }
         ];
 
-        // Enemy spawn points for each wave
+        // Enemy spawn points and types for each wave (10 waves total)
         const enemySpawns = [
-            [{ x: 0, y: 100 }],
-            [{ x: 0, y: 100 }, { x: 0, y: 100 }],
-            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }],
-            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }],
-            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }],
-            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }],
-            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }],
-            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }]
+            [{ x: 0, y: 100 }],                                    // Wave 1: 1 basic
+            [{ x: 0, y: 100 }, { x: 0, y: 100 }],                  // Wave 2: 2 basic
+            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }], // Wave 3: 3 basic
+            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }], // Wave 4: 4 basic
+            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }], // Wave 5: 5 basic
+            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }], // Wave 6: 6 basic
+            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }], // Wave 7: 7 basic
+            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }], // Wave 8: 8 basic
+            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }], // Wave 9: 10 basic+fast
+            [{ x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }, { x: 0, y: 100 }] // Wave 10: Boss + minions
         ];
 
         // Enemy classes
         class Enemy {
-            constructor(waveNumber) {
+            constructor(waveNumber, isBoss = false) {
                 this.pathIndex = 0;
                 this.pathPos = 0;
                 this.x = path[0].x;
                 this.y = path[0].y;
-                this.maxSpeed = 1 + waveNumber * 0.1;
+                this.isBoss = isBoss;
+                
+                // Determine enemy type based on wave and randomness
+                const isTank = !isBoss && waveNumber >= 5 && Math.random() < 0.3;
+                const isFast = !isBoss && waveNumber >= 3 && Math.random() < 0.4;
+                const isFlying = !isBoss && waveNumber >= 7 && Math.random() < 0.25;
+                
+                // Base stats with type multipliers
+                let hpMultiplier = 1;
+                let speedMultiplier = 1;
+                let rewardMultiplier = 1;
+                let radius = 12;
+                let colorBase = waveNumber * 20;
+                
+                if (isBoss) {
+                    hpMultiplier = 8;
+                    speedMultiplier = 0.7;
+                    rewardMultiplier = 5;
+                    radius = 25;
+                    colorBase = 0; // Red
+                } else if (isTank) {
+                    hpMultiplier = 2.5;
+                    speedMultiplier = 0.5;
+                    rewardMultiplier = 1.8;
+                    radius = 16;
+                    colorBase = 60; // Greenish
+                } else if (isFast) {
+                    hpMultiplier = 0.6;
+                    speedMultiplier = 1.8;
+                    rewardMultiplier = 0.8;
+                    radius = 8;
+                    colorBase = 300; // Purple
+                }
+                
+                this.maxSpeed = (1 + waveNumber * 0.15) * speedMultiplier;
                 this.speed = this.maxSpeed;
-                this.maxHealth = 50 + waveNumber * 30;
+                this.maxHealth = (50 + waveNumber * 35) * hpMultiplier;
                 this.health = this.maxHealth;
-                this.reward = 10 + waveNumber * 3;
-                this.radius = 12;
-                this.color = `hsl(${waveNumber * 20}, 70%, 50%)`;
+                this.reward = Math.floor((10 + waveNumber * 4) * rewardMultiplier);
+                this.radius = radius;
+                this.color = `hsl(${colorBase}, 70%, 50%)`;
                 this.slowEffect = 1;
                 this.slowTimer = 0;
                 this.hasReachedEnd = false;
@@ -685,24 +721,49 @@
             if (enemiesLeft > 0) return;
 
             const spawnPoints = enemySpawns[Math.min(wave - 1, enemySpawns.length - 1)];
+            const isBossWave = wave === 10;
+            const bossSpawnCount = isBossWave ? 15 : 0; // Boss spawns last
+            const minionSpawnCount = spawnPoints.length - bossSpawnCount;
+            
             enemiesLeft = spawnPoints.length;
+            let bossSpawned = false;
             
             spawnTimer = setInterval(() => {
-                if (gameRunning && enemiesLeft > 0) {
+                if (!gameRunning) return;
+                
+                const remaining = enemiesLeft + (bossSpawned ? 1 : 0);
+                if (remaining <= 0) {
+                    clearInterval(spawnTimer);
+                    return;
+                }
+                
+                if (isBossWave && !bossSpawned && minionSpawnCount <= 0) {
+                    // Spawn boss
+                    const enemy = new Enemy(wave, true);
+                    enemy.x = path[0].x;
+                    enemy.y = path[0].y;
+                    enemy.pathIndex = 0;
+                    enemy.pathPos = 0;
+                    enemies.push(enemy);
+                    bossSpawned = true;
+                    return;
+                }
+                
+                if (minionSpawnCount > 0) {
                     const spawn = spawnPoints[Math.floor(Math.random() * spawnPoints.length)];
-                    const enemy = new Enemy(wave);
-                    // Start enemies at the beginning of path immediately
+                    const enemy = new Enemy(wave, false);
                     enemy.x = path[0].x;
                     enemy.y = path[0].y;
                     enemy.pathIndex = 0;
                     enemy.pathPos = 0;
                     enemies.push(enemy);
                     enemiesLeft--;
+                    minionSpawnCount--;
                     updateStats();
+                }
 
-                    if (enemiesLeft === 0) {
-                        clearInterval(spawnTimer);
-                    }
+                if (enemiesLeft === 0 && bossSpawned) {
+                    clearInterval(spawnTimer);
                 }
             }, 500); // Spawn faster
         }
