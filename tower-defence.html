@@ -325,10 +325,10 @@
                     return false; // Remove enemy
                 }
 
-                const target = path[this.pathIndex + 1];
+                const targetPoint = path[this.pathIndex + 1];
                 
                 // If no target waypoint, enemy has reached the end
-                if (!target) {
+                if (!targetPoint) {
                     this.hasReachedEnd = true;
                     lives--;
                     updateStats();
@@ -338,13 +338,13 @@
                     return false; // Remove enemy
                 }
 
-                const dx = target.x - this.x;
-                const dy = target.y - this.y;
+                const dx = targetPoint.x - this.x;
+                const dy = targetPoint.y - this.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
 
+                // Check if enemy reached the waypoint
                 if (distance < 5) {
                     this.pathIndex++;
-                    this.pathPos = 0;
                     
                     // Check if this was the last waypoint
                     if (this.pathIndex >= path.length - 1) {
@@ -358,12 +358,20 @@
                     }
                 }
 
+                // Move enemy towards the target waypoint
                 const moveSpeed = this.speed * this.slowEffect;
-                this.pathPos += moveSpeed;
-                const progress = this.pathPos / 100;
-
-                this.x = path[this.pathIndex].x + dx * progress;
-                this.y = path[this.pathIndex].y + dy * progress;
+                
+                if (distance <= moveSpeed) {
+                    // Reached waypoint, snap to it
+                    this.x = targetPoint.x;
+                    this.y = targetPoint.y;
+                } else {
+                    // Move towards waypoint
+                    const angle = Math.atan2(dy, dx);
+                    this.x += Math.cos(angle) * moveSpeed;
+                    this.y += Math.sin(angle) * moveSpeed;
+                }
+                
                 return true; // Keep enemy
             }
 
