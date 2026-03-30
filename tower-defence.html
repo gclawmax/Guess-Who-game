@@ -823,7 +823,7 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Event listeners
+        // Event listeners for desktop (mouse)
         canvas.addEventListener('mousemove', (e) => {
             previewPosition = getMousePosition(e);
         });
@@ -836,6 +836,31 @@
                 );
             }
         });
+
+        // Mobile touch support
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const pos = {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top
+            };
+            previewPosition = pos;
+            if (selectedTower) {
+                buildTower(pos.x, pos.y);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            previewPosition = {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top
+            };
+        }, { passive: false });
 
         // Initialize preview position
         previewPosition = { x: 400, y: 300 };
