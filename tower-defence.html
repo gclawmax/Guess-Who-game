@@ -263,30 +263,45 @@
             <div class="controls-panel">
                 <h2>🏰 Build Tower</h2>
                 <div class="tower-selector">
-                    <button class="tower-btn" id="tower-cannon" onclick="selectTower('cannon')">
+                    <button class="tower-btn" id="tower-cannon" onclick="toggleTowerSelection('cannon')">
                         <span class="tower-info">
                             <span class="tower-name">🔫 Cannon</span>
                             <span class="tower-cost">Gold: 50</span>
                         </span>
+                        <span class="tower-status" style="font-size: 1.2em; margin-left: 10px;">➕</span>
                     </button>
-                    <button class="tower-btn" id="tower-sniper" onclick="selectTower('sniper')">
+                    <button class="tower-btn" id="tower-sniper" onclick="toggleTowerSelection('sniper')">
                         <span class="tower-info">
                             <span class="tower-name">🎯 Sniper</span>
                             <span class="tower-cost">Gold: 100</span>
                         </span>
+                        <span class="tower-status" style="font-size: 1.2em; margin-left: 10px;">➕</span>
                     </button>
-                    <button class="tower-btn" id="tower-rapid" onclick="selectTower('rapid')">
+                    <button class="tower-btn" id="tower-rapid" onclick="toggleTowerSelection('rapid')">
                         <span class="tower-info">
                             <span class="tower-name">⚡ Rapid Fire</span>
                             <span class="tower-cost">Gold: 150</span>
                         </span>
+                        <span class="tower-status" style="font-size: 1.2em; margin-left: 10px;">➕</span>
                     </button>
-                    <button class="tower-btn" id="tower-freeze" onclick="selectTower('freeze')">
+                    <button class="tower-btn" id="tower-freeze" onclick="toggleTowerSelection('freeze')">
                         <span class="tower-info">
                             <span class="tower-name">❄️ Freeze</span>
                             <span class="tower-cost">Gold: 200</span>
                         </span>
+                        <span class="tower-status" style="font-size: 1.2em; margin-left: 10px;">➕</span>
                     </button>
+                </div>
+                <div id="placement-controls" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <p style="font-size: 0.9em; margin-bottom: 10px; text-align: center;">Place tower on map:</p>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button class="action-btn" onclick="confirmTowerPlacement()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                            ✅ Place Tower
+                        </button>
+                        <button class="action-btn secondary" onclick="cancelTowerPlacement()">
+                            ❌ Cancel
+                        </button>
+                    </div>
                 </div>
                 <div style="margin-top: 15px;">
                     <button class="action-btn" onclick="startNextWave()">▶️ Next Wave</button>
@@ -335,6 +350,8 @@
         let gameRunning = false;
         let selectedTower = null;
         let selectedTowerCost = 0;
+        let isPlacingTower = false;
+        let pendingTowerType = null;
         let towers = [];
         let enemies = [];
         let projectiles = [];
@@ -1019,6 +1036,218 @@
         // Initialize
         updateStats();
         gameLoop();
+
+        // Tower placement management
+        function toggleTowerSelection(towerType) {
+            if (isPlacingTower && selectedTower === towerType) {
+                // Deselect current tower
+                cancelTowerPlacement();
+                return;
+            }
+
+            // If another tower is already selected, deselect it first
+            if (selectedTower && selectedTower !== towerType) {
+                const prevBtn = document.getElementById(`tower-${selectedTower}`);
+                if (prevBtn) {
+                    prevBtn.classList.remove('selected');
+                    const statusSpan = prevBtn.querySelector('.tower-status');
+                    if (statusSpan) statusSpan.textContent = '➕';
+                }
+            }
+
+            // Toggle the new tower
+            if (selectedTower === towerType) {
+                // Deselect
+                selectedTower = null;
+                selectedTowerCost = 0;
+                isPlacingTower = false;
+                pendingTowerType = null;
+                
+                const btn = document.getElementById(`tower-${towerType}`);
+                if (btn) {
+                    btn.classList.remove('selected');
+                }
+                const statusSpan = btn?.querySelector('.tower-status');
+                if (statusSpan) statusSpan.textContent = '➕';
+                
+                document.getElementById('placement-controls').style.display = 'none';
+            } else {
+                // Select new tower
+                selectedTower = towerType;
+                selectedTowerCost = TOWER_TYPES[towerType].cost;
+                isPlacingTower = true;
+                pendingTowerType = towerType;
+                
+                const btn = document.getElementById(`tower-${towerType}`);
+                if (btn) {
+                    btn.classList.add('selected');
+                }
+                const statusSpan = btn?.querySelector('.tower-status');
+                if (statusSpan) statusSpan.textContent = '❌';
+                
+                document.getElementById('placement-controls').style.display = 'block';
+            }
+            
+            updateStats();
+        }
+
+        function confirmTowerPlacement() {
+            if (!pendingTowerType || !previewPosition) return;
+            
+            const cost = TOWER_TYPES[pendingTowerType].cost;
+            if (gold < cost) {
+                alert('Not enough gold!');
+                return;
+            }
+
+            // Check if placement is valid (not on path, not overlapping other towers)
+            const x = previewPosition.x;
+            const y = previewPosition.y;
+            
+            // Check path collision
+            if (isOnPath(x, y)) {
+                alert('Cannot place tower on the path!');
+                return;
+            }
+
+            // Check tower overlap
+            const overlap = towers.some(tower => {
+                const dist = Math.sqrt((tower.x - x) ** 2 + (tower.y - y) ** 2);
+                return dist < 60;
+            });
+
+            if (overlap) {
+                alert('Cannot place tower here - already has a tower!');
+                return;
+            }
+
+            // Place the tower
+            buildTower(x, y);
+
+            // Reset placement state
+            cancelTowerPlacement();
+        }
+
+        function cancelTowerPlacement() {
+            selectedTower = null;
+            selectedTowerCost = 0;
+            isPlacingTower = false;
+            pendingTowerType = null;
+
+            // Remove selected class from all tower buttons
+            document.querySelectorAll('.tower-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                const statusSpan = btn.querySelector('.tower-status');
+                if (statusSpan) statusSpan.textContent = '➕';
+            });
+
+            document.getElementById('placement-controls').style.display = 'none';
+            updateStats();
+        }
+
+        function isOnPath(x, y) {
+            const pathWidth = 40;
+            // Simple check if point is near the path waypoints
+            for (let i = 0; i < path.length - 1; i++) {
+                const start = path[i];
+                const end = path[i + 1];
+                
+                // Check if point is within the path segment
+                const minX = Math.min(start.x, end.x) - pathWidth/2;
+                const maxX = Math.max(start.x, end.x) + pathWidth/2;
+                const minY = Math.min(start.y, end.y) - pathWidth/2;
+                const maxY = Math.max(start.y, end.y) + pathWidth/2;
+
+                if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Add ability to select and sell towers after placement
+        canvas.addEventListener('click', (e) => {
+            if (!gameRunning) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Check if clicking on a tower
+            const clickedTower = towers.find(tower => {
+                const dist = Math.sqrt((tower.x - x) ** 2 + (tower.y - y) ** 2);
+                return dist < 25;
+            });
+
+            if (clickedTower) {
+                showTowerSellOption(clickedTower);
+            } else {
+                // Deselect any selected tower
+                cancelTowerSale();
+            }
+        });
+
+        function showTowerSellOption(tower) {
+            // Create a sell button overlay near the tower
+            const sellBtn = document.createElement('button');
+            sellBtn.textContent = '💰 Sell for ' + Math.round(tower.goldValue * 0.7) + 'g';
+            sellBtn.style.position = 'absolute';
+            sellBtn.style.background = '#f59e0b';
+            sellBtn.style.color = 'white';
+            sellBtn.style.border = 'none';
+            sellBtn.style.padding = '8px 12px';
+            sellBtn.style.borderRadius = '6px';
+            sellBtn.style.cursor = 'pointer';
+            sellBtn.style.fontSize = '0.9em';
+            sellBtn.style.fontWeight = 'bold';
+            sellBtn.style.zIndex = '100';
+            sellBtn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+            sellBtn.style.transform = 'translateY(-50px)';
+            sellBtn.style.transition = 'all 0.2s ease';
+            sellBtn.onmouseenter = () => sellBtn.style.transform = 'translateY(-60px) scale(1.05)';
+            sellBtn.onmouseleave = () => sellBtn.style.transform = 'translateY(-50px) scale(1)';
+
+            sellBtn.onclick = (e) => {
+                e.stopPropagation();
+                sellTower(tower);
+                if (sellBtn.parentNode) {
+                    sellBtn.parentNode.removeChild(sellBtn);
+                }
+            };
+
+            // Position the button above the tower
+            const canvasRect = canvas.getBoundingClientRect();
+            sellBtn.style.left = (canvasRect.left + tower.x) + 'px';
+            sellBtn.style.top = (canvasRect.top + tower.y - 40) + 'px';
+
+            canvas.appendChild(sellBtn);
+        }
+
+        function sellTower(tower) {
+            const refund = Math.round(tower.goldValue * 0.7);
+            gold += refund;
+            
+            // Remove from towers array
+            towers = towers.filter(t => t !== tower);
+            
+            // Remove the selected state if this was the selected tower
+            cancelTowerSale();
+            
+            updateStats();
+            
+            // Visual feedback
+            createParticles(tower.x, tower.y, '#f59e0b', 10);
+        }
+
+        function cancelTowerSale() {
+            // Remove any sell buttons from canvas
+            const sellBtns = document.querySelectorAll('button[onclick*="sellTower"]');
+            sellBtns.forEach(btn => {
+                if (btn.parentNode === canvas) {
+                    btn.parentNode.removeChild(btn);
+                }
+            });
+        }
     </script>
 </body>
 </html>
